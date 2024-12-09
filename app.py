@@ -4,7 +4,17 @@ import time
 import numpy as np
 import os
 
+@st.cache_data
 def list_available_cameras(max_cameras=10):
+    """
+    Lists available camera indices.
+
+    Args:
+        max_cameras (int): Maximum number of camera indices to check.
+
+    Returns:
+        list: List of available camera indices.
+    """
     available_cameras = []
     for index in range(max_cameras):
         # For Windows, use CAP_DSHOW to prevent warnings
@@ -17,11 +27,28 @@ def list_available_cameras(max_cameras=10):
 def main():
     st.title("Laptop Webcam as IP Camera")
 
-    # List available cameras
-    cameras = list_available_cameras()
+    # Button to refresh camera list
+    if 'cameras' not in st.session_state:
+        st.session_state.cameras = []
+
+    refresh = st.button("Refresh Cameras")
+
+    if refresh:
+        # Clear the cached camera list by invalidating the cache
+        list_available_cameras.clear()
+        st.session_state.cameras = []
+
+    # If cameras are not cached yet or have been refreshed
+    if not st.session_state.cameras:
+        with st.spinner('Listing available cameras...'):
+            cameras = list_available_cameras()
+            st.session_state.cameras = cameras
+        st.success('Camera listing completed!')
+    else:
+        cameras = st.session_state.cameras
 
     if not cameras:
-        st.error("No cameras found. Please connect a camera and refresh the page.", icon="🚨")
+        st.error("No cameras found. Please connect a camera and click 'Refresh Cameras'.", icon="🚨")
         return
 
     # Dropdown to select camera
